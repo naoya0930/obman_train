@@ -147,7 +147,13 @@ def batch_mesh_contains_points(
     t_pos = t >= tol_thresh
     parallel = parallel.repeat(1, point_nb)
     # # Check that all intersection conditions are met
-    not_parallel = parallel.logical_not()
+    
+    # This code does not support torch1.2 or higher.
+    # not_parallel = parallel.logical_not()
+    not_parallel = np.logical_not(parallel.cpu())
+    not_parallel = not_parallel.to(parallel.device).type(torch.uint8)
+    final_inter = v_correct.type(torch.uint8) * u_correct.type(torch.uint8) * not_parallel * t_pos.type(torch.uint8)
+    
     final_inter = v_correct * u_correct * not_parallel * t_pos
     # Reshape batch point/vertices intersection matrix
     # final_intersections[batch_idx, point_idx, triangle_idx] == 1 means ray
